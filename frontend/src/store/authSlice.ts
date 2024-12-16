@@ -15,17 +15,6 @@ const initialState: AuthState = {
 	error: null,
 };
 
-export const register = createAsyncThunk(
-	"auth/register",
-	async (credentials: { username: string; password: string }) => {
-		const response = await axiosInstance.post(
-			"/auth/register",
-			credentials
-		);
-		return response.data;
-	}
-);
-
 export const login = createAsyncThunk(
 	"auth/login",
 	async (credentials: { username: string; password: string }) => {
@@ -34,8 +23,8 @@ export const login = createAsyncThunk(
 	}
 );
 
-export const logout = createAsyncThunk("auth/logout", async () => {
-	const response = await axiosInstance.post("/auth/logout");
+export const checkAuth = createAsyncThunk("auth/checkAuth", async () => {
+	const response = await axiosInstance.get("/auth/check");
 	return response.data;
 });
 
@@ -45,35 +34,25 @@ const authSlice = createSlice({
 	reducers: {},
 	extraReducers: (builder) => {
 		builder
-			.addCase(register.fulfilled, (state, action) => {
-				state.isAuthenticated = true;
-				state.user = action.payload;
-				state.status = "succeeded";
+			.addCase(login.pending, (state) => {
+				state.status = "loading";
+				state.error = null;
 			})
 			.addCase(login.fulfilled, (state, action) => {
 				state.isAuthenticated = true;
 				state.user = action.payload;
 				state.status = "succeeded";
+				state.error = null;
 			})
-			.addCase(logout.fulfilled, (state) => {
-				state.isAuthenticated = false;
-				state.user = null;
-				state.status = "idle";
+			.addCase(login.rejected, (state, action) => {
+				state.status = "failed";
+				state.error = action.error.message || "An error occurred";
 			})
-			.addMatcher(
-				(action) => action.type.endsWith("/pending"),
-				(state) => {
-					state.status = "loading";
-					state.error = null;
-				}
-			)
-			.addMatcher(
-				(action) => action.type.endsWith("/rejected"),
-				(state, action: { error: { message: string } }) => {
-					state.status = "failed";
-					state.error = action.error.message || "An error occurred";
-				}
-			);
+			.addCase(checkAuth.fulfilled, (state, action) => {
+				state.isAuthenticated = true;
+				state.user = action.payload;
+				state.status = "succeeded";
+			});
 	},
 });
 

@@ -15,7 +15,10 @@ const Login: React.FC = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
-			await dispatch(login({ username, password })).unwrap();
+			const result = await dispatch(
+				login({ username, password })
+			).unwrap();
+			console.log("Login successful:", result);
 			navigate("/dashboard");
 		} catch (err) {
 			console.error("Failed to log in:", err);

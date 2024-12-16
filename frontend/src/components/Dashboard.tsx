@@ -20,7 +20,7 @@ import {
 	Chip,
 } from "@mui/material";
 import { Delete, CheckCircle, RadioButtonUnchecked } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import io from "socket.io-client";
 
 const Dashboard: React.FC = () => {
@@ -29,26 +29,45 @@ const Dashboard: React.FC = () => {
 	const { items: notifications, status } = useSelector(
 		(state: RootState) => state.notifications
 	);
+	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 	const [filter, setFilter] = useState<"all" | "info" | "alert" | "message">(
 		"all"
 	);
 
+	if (!isAuthenticated) {
+		return <Navigate to="/login" />;
+	}
+
 	useEffect(() => {
 		dispatch(fetchNotifications());
 
-		const socket = io("/", { path: "/ws" });
+		const socket = io("/", {
+			path: "/ws",
+			transports: ["websocket"],
+		});
+
+		socket.on("connect", () => {
+			console.log("WebSocket connected");
+		});
+
+		socket.on("connect_error", (error) => {
+			console.error("WebSocket connection error:", error);
+		});
+
 		socket.on("newNotification", (notification) => {
 			dispatch({
 				type: "notifications/addNewNotification",
 				payload: notification,
 			});
 		});
+
 		socket.on("updateNotification", (notification) => {
 			dispatch({
 				type: "notifications/updateExistingNotification",
 				payload: notification,
 			});
 		});
+
 		socket.on("deleteNotification", (id) => {
 			dispatch({ type: "notifications/removeNotification", payload: id });
 		});
