@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
 	useEffect(() => {
 		dispatch(fetchNotifications());
 
-		const socket = io("http://localhost:5000");
+		const socket = io("/", { path: "/ws" });
 		socket.on("newNotification", (notification) => {
 			dispatch({
 				type: "notifications/addNewNotification",
@@ -121,7 +121,7 @@ const Dashboard: React.FC = () => {
 			)}
 			<List>
 				{filteredNotifications.map((notification) => (
-					<ListItem key={notification._id} component="button">
+					<ListItem key={notification._id} component="div">
 						<ListItemText
 							primary={notification.title}
 							secondary={

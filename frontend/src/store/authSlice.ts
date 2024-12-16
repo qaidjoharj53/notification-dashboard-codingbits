@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../utils/axiosConfig";
 
 interface AuthState {
 	isAuthenticated: boolean;
-	user: string | null;
+	user: { id: string; username: string; role: string } | null;
 	status: "idle" | "loading" | "succeeded" | "failed";
 	error: string | null;
 }
@@ -18,7 +18,10 @@ const initialState: AuthState = {
 export const register = createAsyncThunk(
 	"auth/register",
 	async (credentials: { username: string; password: string }) => {
-		const response = await axios.post("/api/auth/register", credentials);
+		const response = await axiosInstance.post(
+			"/auth/register",
+			credentials
+		);
 		return response.data;
 	}
 );
@@ -26,13 +29,13 @@ export const register = createAsyncThunk(
 export const login = createAsyncThunk(
 	"auth/login",
 	async (credentials: { username: string; password: string }) => {
-		const response = await axios.post("/api/auth/login", credentials);
+		const response = await axiosInstance.post("/auth/login", credentials);
 		return response.data;
 	}
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
-	const response = await axios.post("/api/auth/logout");
+	const response = await axiosInstance.post("/auth/logout");
 	return response.data;
 });
 
@@ -44,12 +47,12 @@ const authSlice = createSlice({
 		builder
 			.addCase(register.fulfilled, (state, action) => {
 				state.isAuthenticated = true;
-				state.user = action.payload.username;
+				state.user = action.payload;
 				state.status = "succeeded";
 			})
 			.addCase(login.fulfilled, (state, action) => {
 				state.isAuthenticated = true;
-				state.user = action.payload.username;
+				state.user = action.payload;
 				state.status = "succeeded";
 			})
 			.addCase(logout.fulfilled, (state) => {
@@ -66,10 +69,9 @@ const authSlice = createSlice({
 			)
 			.addMatcher(
 				(action) => action.type.endsWith("/rejected"),
-				(state, action) => {
+				(state, action: { error: { message: string } }) => {
 					state.status = "failed";
-					state.error =
-						(action as any).error.message || "An error occurred";
+					state.error = action.error.message || "An error occurred";
 				}
 			);
 	},

@@ -10,10 +10,11 @@ import { RootState } from "./store";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
+import AdminPortal from "./components/AdminPortal";
 
 const App: React.FC = () => {
-	const isAuthenticated = useSelector(
-		(state: RootState) => state.auth.isAuthenticated
+	const { isAuthenticated, user } = useSelector(
+		(state: RootState) => state.auth
 	);
 
 	return (
@@ -28,6 +29,16 @@ const App: React.FC = () => {
 							<Dashboard />
 						) : (
 							<Navigate to="/login" />
+						)
+					}
+				/>
+				<Route
+					path="/admin"
+					element={
+						isAuthenticated && user?.role === "admin" ? (
+							<AdminPortal />
+						) : (
+							<Navigate to="/dashboard" />
 						)
 					}
 				/>
